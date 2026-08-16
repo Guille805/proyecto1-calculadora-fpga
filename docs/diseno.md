@@ -37,3 +37,18 @@ La calculadora estará dividida en:
 4. Selector de operación.
 5. Registro para almacenar el resultado.
 6. Control de botones, LED y displays.
+
+## 6. Operaciones requeridas
+
+| Código | Operación | Resultado | Descripción |
+|---|---|---|---|
+| `3'b000` | Reinicio | `R = 4'b0000` | Coloca el resultado almacenado en cero. |
+| `3'b001` | Suma | `R = A + B` | Suma ambos operandos. |
+| `3'b010` | Resta | `R = A - B` | Resta B a A utilizando complemento a dos. |
+| `3'b011` | Resta inversa | `R = B - A` | Resta A a B utilizando complemento a dos. |
+| `3'b100` | Desplazamiento izquierdo | A desplazado a la izquierda | Desplaza A entre 0 y 3 posiciones usando `B[1:0]`. |
+| `3'b101` | Desplazamiento derecho | A desplazado a la derecha | Desplaza A entre 0 y 3 posiciones usando `B[1:0]`. |
+
+En esta tabla, `A` corresponde a `op1`. El valor `B` puede ser `op2` o el resultado anterior, según el selector `use_previous`.
+
+Los códigos `3'b110` y `3'b111` quedan sin utilizar. Todas las operaciones conservan solamente los cuatro bits menos significativos del resultado.
