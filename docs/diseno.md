@@ -88,3 +88,31 @@ El circuito necesita:
 - Una compuerta OR.
 
 Como los operandos tienen cuatro bits, este mismo circuito se repite cuatro veces, una vez para cada bit.
+
+### 7.3 Mapa de Karnaugh
+
+Para simplificar el mapa se utilizarán las siguientes variables:
+
+- `S = use_previous`
+- `X = op2[i]`
+- `P = previous[i]`
+
+Las columnas se ordenan utilizando el código Gray: `00`, `01`, `11`, `10`.
+
+| `S / XP` | `00` | `01` | `11` | `10` |
+|---|---|---|---|---|
+| `0` | 0 | 0 | 1 | 1 |
+| `1` | 0 | 1 | 1 | 0 |
+
+En el mapa se forman dos grupos:
+
+1. Los dos unos de la fila `S = 0` donde `X = 1`. Este grupo produce `NOT S AND X`.
+2. Los dos unos de la fila `S = 1` donde `P = 1`. Este grupo produce `S AND P`.
+
+Al unir ambos grupos mediante una compuerta OR se obtiene:
+
+`B[i] = (NOT S AND X) OR (S AND P)`
+
+Reemplazando los nombres abreviados:
+
+`B[i] = (NOT use_previous AND op2[i]) OR (use_previous AND previous[i])`
