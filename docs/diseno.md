@@ -52,3 +52,39 @@ La calculadora estará dividida en:
 En esta tabla, `A` corresponde a `op1`. El valor `B` puede ser `op2` o el resultado anterior, según el selector `use_previous`.
 
 Los códigos `3'b110` y `3'b111` quedan sin utilizar. Todas las operaciones conservan solamente los cuatro bits menos significativos del resultado.
+
+## 7. Selector del segundo operando
+
+El segundo operando de la calculadora se denominará `B`. Este valor se obtiene mediante un multiplexor de dos entradas.
+
+- Si `use_previous = 0`, se selecciona el operando externo `op2`.
+- Si `use_previous = 1`, se selecciona el resultado anterior `previous`.
+
+### 7.1 Tabla de verdad para un bit
+
+La siguiente tabla describe el comportamiento para cada bit `i`:
+
+| `use_previous` | `op2[i]` | `previous[i]` | `B[i]` |
+|---|---|---|---|
+| 0 | 0 | 0 | 0 |
+| 0 | 0 | 1 | 0 |
+| 0 | 1 | 0 | 1 |
+| 0 | 1 | 1 | 1 |
+| 1 | 0 | 0 | 0 |
+| 1 | 0 | 1 | 1 |
+| 1 | 1 | 0 | 0 |
+| 1 | 1 | 1 | 1 |
+
+### 7.2 Expresión booleana
+
+Para cada bit, la salida puede expresarse como:
+
+`B[i] = (NOT use_previous AND op2[i]) OR (use_previous AND previous[i])`
+
+El circuito necesita:
+
+- Una compuerta NOT.
+- Dos compuertas AND.
+- Una compuerta OR.
+
+Como los operandos tienen cuatro bits, este mismo circuito se repite cuatro veces, una vez para cada bit.
