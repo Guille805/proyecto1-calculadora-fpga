@@ -1,0 +1,629 @@
+\documentclass[12pt,a4paper]{article}
+
+% =========================================================
+% PAQUETES
+% =========================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+
+\usepackage[
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm
+]{geometry}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[table]{xcolor}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+% =========================================================
+% CONFIGURACIÓN GENERAL
+% =========================================================
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.7em}
+
+\renewcommand{\arraystretch}{1.4}
+
+\captionsetup{
+    font=small,
+    labelfont=normalfont,
+    justification=centering
+}
+
+% Colores
+\definecolor{azultabla}{RGB}{195,211,238}
+\definecolor{verdecodigo}{RGB}{45,140,75}
+\definecolor{grisK}{RGB}{240,240,240}
+
+% =========================================================
+% DOCUMENTO
+% =========================================================
+
+\begin{document}
+
+% =========================================================
+% PORTADA
+% =========================================================
+
+\begin{titlepage}
+
+    \centering
+
+    \vspace*{2cm}
+
+    {\LARGE\textbf{Proyecto 1 --- Diseño Lógico y FPGA}\par}
+
+    \vspace{0.5cm}
+
+    {\Large Calculadora de 4 bits\par}
+
+    \vspace{1.5cm}
+
+    {\large Arquitectura de Computadores\par}
+
+    {\large Universidad de los Andes\par}
+
+    \vspace{2cm}
+
+    {\large \textbf{Grupo N$^\circ$ 1}\par}
+
+    \vspace{1.2cm}
+
+    {\large \textbf{Integrantes:}\par}
+
+    \vspace{0.4cm}
+
+    {\large
+    Christian Acevedo\\
+    Guillermo Arriaza\\
+    Eduardo Ponce
+    \par}
+
+    \vspace{1.5cm}
+
+    {\large \textbf{Profesor:}\par}
+
+    {\large Jorge Gomez\par}
+
+    \vfill
+
+    {\large 1 de Septiembre del 2026\par}
+
+\end{titlepage}
+
+% =========================================================
+% 1. OBJETIVO DEL PROYECTO
+% =========================================================
+
+\section{Objetivo del proyecto}
+
+El objetivo del proyecto es diseñar e implementar una calculadora digital de
+4 bits utilizando Verilog, cuya lógica combinacional se construye mediante
+compuertas lógicas. El sistema es implementado en una FPGA Lattice iCE40 HX1K
+de la Nandland Go Board.
+
+La calculadora trabaja con operandos de 4 bits y permite representar valores
+negativos mediante complemento a dos. El resultado de cada operación se
+almacena en un registro de 4 bits, pudiendo ser utilizado posteriormente como
+segundo operando de una nueva operación.
+
+% =========================================================
+% 2. OPERACIONES IMPLEMENTADAS
+% =========================================================
+
+\section{Operaciones implementadas}
+
+\begin{table}[H]
+
+\centering
+
+\caption{Operaciones implementadas}
+
+\begin{tabular}{
+|>{\centering\arraybackslash}p{2.5cm}|
+>{\centering\arraybackslash}p{4.5cm}|
+>{\centering\arraybackslash}p{5cm}|
+}
+
+\hline
+
+\textbf{Código} &
+\textbf{Operación} &
+\textbf{Expresión}
+\\ \hline
+
+\textcolor{verdecodigo}{000}
+&
+Reinicio
+&
+$R = 0000$
+\\ \hline
+
+\textcolor{verdecodigo}{001}
+&
+Suma
+&
+$R = A + B$
+\\ \hline
+
+\textcolor{verdecodigo}{010}
+&
+Resta
+&
+$R = A - B$
+\\ \hline
+
+\textcolor{verdecodigo}{011}
+&
+Resta inversa
+&
+$R = B - A$
+\\ \hline
+
+\textcolor{verdecodigo}{100}
+&
+Shift left lógico
+&
+$R = A << B[1:0]$
+\\ \hline
+
+\textcolor{verdecodigo}{101}
+&
+Shift right lógico
+&
+$R = A >> B[1:0]$
+\\ \hline
+
+\end{tabular}
+
+\vspace{0.25cm}
+
+{\small Fuente. Elaboración Propia.}
+
+\end{table}
+
+Los desplazamientos utilizan los dos bits menos significativos de $B$, por lo
+que es posible desplazar el operando $A$ entre 0 y 3 posiciones.
+
+Todos los cálculos se realizan utilizando únicamente 4 bits. Cuando una
+operación genera un resultado que excede este ancho, se conservan solamente
+los cuatro bits menos significativos, produciendo el comportamiento de
+overflow correspondiente.
+
+El segundo operando puede provenir de dos fuentes:
+
+\begin{itemize}
+
+    \item un valor externo ingresado por el usuario;
+
+    \item el resultado almacenado de la operación anterior.
+
+\end{itemize}
+
+Esto permite encadenar distintas operaciones utilizando el resultado previo
+sin necesidad de ingresarlo nuevamente.
+
+% =========================================================
+% 3. ARQUITECTURA GENERAL
+% =========================================================
+
+\section{Arquitectura general de la calculadora}
+
+El sistema se organiza en bloques funcionales que permiten ingresar los
+operandos, seleccionar la operación, ejecutar el cálculo y almacenar el
+resultado obtenido.
+
+La arquitectura se divide en una unidad de control, una unidad de
+procesamiento y una interfaz de entrada/salida.
+
+La unidad de control gestiona la secuencia de ingreso de datos mediante una
+máquina de estados.
+
+El usuario selecciona primero la operación, luego el primer operando $A$ y
+posteriormente el segundo operando $B$.
+
+Para este último, el sistema permite escoger entre un valor ingresado
+externamente o el resultado almacenado de la operación anterior.
+
+El segundo operando se selecciona mediante un multiplexor de 4 bits.
+
+A continuación, los operandos y el código de operación ingresan a la ALU,
+encargada de ejecutar una de las operaciones disponibles.
+
+El resultado generado por la ALU se almacena en un registro de 4 bits, cuya
+salida corresponde al resultado actual de la calculadora y, al mismo tiempo,
+puede realimentarse hacia el multiplexor para utilizarse como segundo
+operando en una operación posterior.
+
+% =========================================================
+% 3.1 DIAGRAMA GENERAL
+% =========================================================
+
+\subsection{Diagrama general}
+
+\begin{figure}[H]
+
+    \centering
+
+    \includegraphics[
+        width=\textwidth,
+        keepaspectratio
+    ]{diagrama_arquitectura.png}
+
+    \caption{Diagrama general de arquitectura de la calculadora.}
+
+    \label{fig:arquitectura}
+
+\end{figure}
+
+% =========================================================
+% 4. FULL ADDER
+% =========================================================
+
+\section{Full Adder}
+
+El bloque \texttt{full\_adder} constituye la unidad básica utilizada para
+implementar la suma binaria del sistema.
+
+Este circuito recibe tres entradas de un bit: los operandos $A$ y $B$, junto
+con el acarreo de entrada $C_{in}$.
+
+Como resultado entrega el bit de suma $S$ y el acarreo de salida $C_{out}$.
+
+% =========================================================
+% 4.1 TABLA DE VERDAD
+% =========================================================
+
+\subsection{Tabla de verdad}
+
+\begin{table}[H]
+
+\centering
+
+\caption{Tabla de verdad del Full Adder}
+
+\begin{tabular}{
+|>{\centering\arraybackslash}p{2.2cm}|
+>{\centering\arraybackslash}p{2.2cm}|
+>{\centering\arraybackslash}p{2.2cm}|
+>{\centering\arraybackslash}p{2.2cm}|
+>{\centering\arraybackslash}p{2.2cm}|
+}
+
+\hline
+
+\rowcolor{azultabla}
+
+\textbf{A} &
+\textbf{B} &
+$\mathbf{C_{in}}$ &
+\textbf{S} &
+$\mathbf{C_{out}}$
+\\ \hline
+
+0 & 0 & 0 & 0 & 0 \\ \hline
+0 & 0 & 1 & 1 & 0 \\ \hline
+0 & 1 & 0 & 1 & 0 \\ \hline
+0 & 1 & 1 & 0 & 1 \\ \hline
+1 & 0 & 0 & 1 & 0 \\ \hline
+1 & 0 & 1 & 0 & 1 \\ \hline
+1 & 1 & 0 & 0 & 1 \\ \hline
+1 & 1 & 1 & 1 & 1 \\ \hline
+
+\end{tabular}
+
+\vspace{0.25cm}
+
+{\small Fuente. Elaboración Propia.}
+
+\end{table}
+
+% =========================================================
+% 4.2 EXPRESIÓN BOOLEANA DE LA SUMA
+% =========================================================
+
+\subsection{Expresión booleana de la suma}
+
+A partir de la tabla de verdad del Full Adder, la salida de suma $S$ toma el
+valor 1 cuando existe una cantidad impar de entradas activas entre $A$, $B$ y
+$C_{in}$.
+
+La expresión booleana correspondiente es:
+
+\[
+\boxed{
+S = A \oplus B \oplus C_{in}
+}
+\]
+
+En la implementación del circuito, esta expresión se obtiene mediante dos
+compuertas XOR consecutivas.
+
+Primero se calcula:
+
+\[
+X = A \oplus B
+\]
+
+Posteriormente, la salida de suma se obtiene como:
+
+\[
+S = X \oplus C_{in}
+\]
+
+Por lo tanto:
+
+\[
+S = (A \oplus B) \oplus C_{in}
+\]
+
+De esta forma, la salida $S$ queda implementada únicamente mediante
+compuertas lógicas, sin utilizar directamente el operador de suma aritmética
+de Verilog.
+
+% =========================================================
+% 4.3 EXPRESIÓN BOOLEANA DEL ACARREO
+% =========================================================
+
+\subsection{Expresión booleana del acarreo}
+
+A partir de la tabla de verdad del Full Adder, la salida de acarreo
+$C_{out}$ toma el valor 1 cuando al menos dos de las entradas $A$, $B$ y
+$C_{in}$ se encuentran activas.
+
+La expresión booleana del acarreo puede escribirse como:
+
+\[
+\boxed{
+C_{out} = AB + AC_{in} + BC_{in}
+}
+\]
+
+En la implementación realizada, esta expresión se representa de forma
+equivalente mediante:
+
+\[
+\boxed{
+C_{out} = AB + C_{in}(A \oplus B)
+}
+\]
+
+Para ello, primero se calcula:
+
+\[
+X = A \oplus B
+\]
+
+Luego se obtienen los términos:
+
+\[
+P_1 = AB
+\]
+
+y
+
+\[
+P_2 = C_{in}X
+\]
+
+Finalmente, ambos términos se combinan mediante una compuerta OR:
+
+\[
+C_{out} = P_1 + P_2
+\]
+
+Por lo tanto:
+
+\[
+C_{out} = AB + C_{in}(A \oplus B)
+\]
+
+De esta forma, el acarreo de salida se implementa únicamente mediante
+compuertas XOR, AND y OR, respetando las restricciones de diseño
+establecidas para el proyecto.
+
+% =========================================================
+% 4.4 MAPAS DE KARNAUGH
+% =========================================================
+
+\subsection{Mapas de Karnaugh}
+
+A partir de la tabla de verdad del Full Adder se construyen los mapas de
+Karnaugh correspondientes a las salidas $S$ y $C_{out}$.
+
+Para ambos mapas se utilizan las variables de entrada $A$, $B$ y $C_{in}$.
+
+Las columnas se ordenan utilizando código Gray:
+
+\[
+BC_{in} = 00,\ 01,\ 11,\ 10
+\]
+
+% =========================================================
+% 4.4.1 KARNAUGH DE S
+% =========================================================
+
+\subsubsection{Mapa de Karnaugh de la salida S}
+
+La salida $S$ toma el valor 1 para los minterms:
+
+\[
+S = \Sigma m(1,2,4,7)
+\]
+
+El mapa correspondiente es:
+
+\begin{table}[H]
+
+\centering
+
+\caption{Mapa de Karnaugh de la salida $S$}
+
+\renewcommand{\arraystretch}{1.8}
+
+\begin{tabular}{
+|>{\centering\arraybackslash}p{2.2cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+}
+
+\hline
+
+\rowcolor{azultabla}
+
+$A \backslash BC_{in}$
+&
+00
+&
+01
+&
+11
+&
+10
+\\ \hline
+
+\rowcolor{grisK}
+
+0
+&
+0
+&
+1
+&
+0
+&
+1
+\\ \hline
+
+1
+&
+1
+&
+0
+&
+1
+&
+0
+\\ \hline
+
+\end{tabular}
+
+\end{table}
+
+En este mapa no es posible formar agrupaciones de dos o más unos, debido al
+comportamiento de paridad de la función.
+
+La expresión obtenida corresponde a:
+
+\[
+\boxed{
+S = A \oplus B \oplus C_{in}
+}
+\]
+
+% =========================================================
+% 4.4.2 KARNAUGH DE COUT
+% =========================================================
+
+\subsubsection{Mapa de Karnaugh de la salida $C_{out}$}
+
+La salida $C_{out}$ toma el valor 1 para los minterms:
+
+\[
+C_{out} = \Sigma m(3,5,6,7)
+\]
+
+El mapa correspondiente es:
+
+\begin{table}[H]
+
+\centering
+
+\caption{Mapa de Karnaugh de la salida $C_{out}$}
+
+\renewcommand{\arraystretch}{1.8}
+
+\begin{tabular}{
+|>{\centering\arraybackslash}p{2.2cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+>{\centering\arraybackslash}p{1.7cm}|
+}
+
+\hline
+
+\rowcolor{azultabla}
+
+$A \backslash BC_{in}$
+&
+00
+&
+01
+&
+11
+&
+10
+\\ \hline
+
+\rowcolor{grisK}
+
+0
+&
+0
+&
+0
+&
+1
+&
+0
+\\ \hline
+
+1
+&
+0
+&
+1
+&
+1
+&
+1
+\\ \hline
+
+\end{tabular}
+
+\end{table}
+
+A partir de las agrupaciones del mapa de Karnaugh se obtiene:
+
+\[
+\boxed{
+C_{out} = AB + AC_{in} + BC_{in}
+}
+\]
+
+La expresión anterior es equivalente a la utilizada en la implementación:
+
+\[
+\boxed{
+C_{out} = AB + C_{in}(A \oplus B)
+}
+\]
+
+Ambas expresiones representan el mismo comportamiento lógico del acarreo de
+salida.
+
+\end{document}
