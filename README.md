@@ -6,7 +6,7 @@ Proyecto de Arquitectura de Computadores (semestre 2026-2). Implementa una calcu
 
 - Guillermo Arriaza
 - Christian Acevedo
-- Edu Ponce
+- Eduardo Ponce
 
 > Reemplazar los nombres antes de la entrega.
 
