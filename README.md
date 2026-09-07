@@ -8,7 +8,6 @@ Proyecto de Arquitectura de Computadores (semestre 2026-2). Implementa una calcu
 - Christian Acevedo
 - Eduardo Ponce
 
-> Reemplazar los nombres antes de la entrega.
 
 ## Funcionalidad
 
@@ -124,22 +123,12 @@ La simulación completa del módulo superior incluye el debounce físico de apro
 ```bash
 make test-board
 ```
-
 ## Informe PDF
 
-La fuente editable del informe se encuentra en `docs/diseno.md`.
-
-Para regenerar el PDF con los nombres correctos:
-
-```bash
-make report AUTHORS="Nombre Apellido · Nombre Apellido · Nombre Apellido"
-```
-
-El archivo resultante se guarda en:
+El informe final del proyecto se encuentra en:
 
 ```text
 docs/informe_proyecto1.pdf
-```
 
 ## Construcción del bitstream
 
